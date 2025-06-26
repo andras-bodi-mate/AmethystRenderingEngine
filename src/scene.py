@@ -9,6 +9,7 @@ class Scene:
         self.objects: list[Object] = []
     
     def draw(self):
+        self.glContext.multisample = True
         self.glContext.enable(self.glContext.DEPTH_TEST)
 
         for object in self.objects:

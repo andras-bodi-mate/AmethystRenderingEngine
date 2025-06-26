@@ -15,7 +15,7 @@ class App:
         self.camera = Camera()
         self.scene = Scene()
 
-        self.scene.addObject(SingleObject(Mesh("res/models/monkey.obj"), Material("shaders/basicVertexShader.glsl", "shaders/basicFragmentShader.glsl")))
+        self.scene.addObject(SingleObject(Mesh("res/models/monkeySmooth.obj"), Material("shaders/basicVertexShader.glsl", "shaders/basicFragmentShader.glsl")))
 
         self.isRunning = True
 

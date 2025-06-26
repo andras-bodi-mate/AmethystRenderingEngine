@@ -16,7 +16,7 @@ class SingleObject(Object):
     def __init__(self, mesh, material):
         super().__init__(mesh, material)
 
-        self.vao = self.glContext.vertex_array(self.material.shaderProgram, self.mesh.vbo, "in_position", index_buffer = self.mesh.ibo)
+        self.vao = self.glContext.vertex_array(self.material.shaderProgram, [(self.mesh.vbo, "3f 3f", "in_position", "in_normal")], index_buffer = self.mesh.ibo)
 
     def draw(self):
         self.vao.render()

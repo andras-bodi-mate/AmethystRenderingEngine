@@ -14,7 +14,7 @@ class Camera:
 
     def updateMatrices(self, aspectRatio):
         elapsedTime = Debug.getElapsedTime()
-        self.position = glm.vec3(glm.cos(elapsedTime * 0.2), 0, glm.sin(elapsedTime * 0.2)) * 2
+        self.position = glm.vec3(glm.cos(elapsedTime * 0.5), 0, glm.sin(elapsedTime * 0.5)) * 2
 
         self.perspectiveTransform = glm.perspective(glm.radians(self.fov), aspectRatio, 0.1, 1000.0)
 

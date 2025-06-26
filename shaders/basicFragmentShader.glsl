@@ -2,12 +2,10 @@
 
 layout (location = 0) out vec4 out_color;
 
-//in vec2 vert_uv;
-//in vec3 vert_normal;
+in vec3 frag_normal;
 
 void main() {
-    //vec2 dummy1 = vert_uv;
-    //vec3 dummy2 = vert_normal;
+    vec3 lightDir = vec3(-1, 0, 0);
 
-    out_color = vec4(1.0, 1.0, 1.0, 1.0);
+    out_color = vec4(frag_normal, 1.0) * mix(0.1, 1.0, clamp(dot(frag_normal, lightDir), 0.0, 1.0));
 }
