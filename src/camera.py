@@ -9,12 +9,13 @@ class Camera:
         self.forward = glm.vec3(0)
         self.up = glm.vec3(0.0, 1.0, 0.0)
 
-        aspectRatio = 1.777
-        self.perspectiveTransform = glm.perspective(glm.radians(self.fov / aspectRatio), aspectRatio, 0.1, 1000.0)
+        self.perspectiveTransform: glm.mat4x4
+        self.updateMatrices(1.0)
 
-    def getViewMatrix(self):
+    def updateMatrices(self, aspectRatio):
         elapsedTime = Debug.getElapsedTime()
         self.position = glm.vec3(glm.cos(elapsedTime * 0.2), 0, glm.sin(elapsedTime * 0.2)) * 2
 
+        self.perspectiveTransform = glm.perspective(glm.radians(self.fov), aspectRatio, 0.1, 1000.0)
+
         self.viewTransform = glm.lookAt(self.position, self.forward, self.up)
-        return self.viewTransform

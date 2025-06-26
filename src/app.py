@@ -16,12 +16,12 @@ class App:
         self.scene = Scene()
 
         self.scene.addObject(SingleObject(Mesh("res/models/monkey.obj"), Material("shaders/basicVertexShader.glsl", "shaders/basicFragmentShader.glsl")))
-        self.scene.updatePerspectiveTransformUniforms(self.camera.perspectiveTransform)
 
         self.isRunning = True
 
     def draw(self):
-        self.scene.updateViewTransformUniforms(self.camera.getViewMatrix())
+        self.scene.updateViewTransformUniforms(self.camera.viewTransform)
+        self.scene.updatePerspectiveTransformUniforms(self.camera.perspectiveTransform)
         self.scene.draw()
 
     def renderLoop(self):
@@ -30,6 +30,7 @@ class App:
         while self.isRunning and not self.window.shouldClose():
             width, height = glfw.get_framebuffer_size(self.window.window)
             self.window.glContext.viewport = (0, 0, width, height)
+            self.camera.updateMatrices(width / height)
 
             self.window.glContext.clear(0.1, 0.1, 0.1)
             self.draw()
