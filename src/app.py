@@ -13,7 +13,7 @@ class App:
     def __init__(self):
         self.window = Window()
         self.camera = Camera(cameraPathMeshPath = "res/models/cameraPath.obj")
-        self.scene = Scene("res/scenes/monkey/monkey.gltf")
+        self.scene = Scene("res/scenes/Sponza/sponza.gltf")
 
         #self.scene.addObject(SingleObject(Mesh("res/models/sponza.obj"), Material("shaders/basicVertexShader.glsl", "shaders/basicFragmentShader.glsl")))
         #print("Object added.")

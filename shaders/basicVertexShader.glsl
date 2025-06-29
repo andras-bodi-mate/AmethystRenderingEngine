@@ -2,6 +2,7 @@
 
 uniform mat4 viewTransform;
 uniform mat4 perspectiveTransform;
+uniform mat4 objectTransform;
 
 layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec3 in_normal;
@@ -14,5 +15,5 @@ void main() {
     v_normal = in_normal;
     v_uv = in_uv;
 
-    gl_Position = perspectiveTransform * viewTransform * vec4(in_position, 1.0);
+    gl_Position = perspectiveTransform * viewTransform * objectTransform * vec4(in_position, 1.0);
 }
