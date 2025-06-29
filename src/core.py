@@ -1,8 +1,18 @@
-from os import path, sep
+from pathlib import Path, PurePosixPath
+
+import glm
 
 class Core:
-    projectDir = path.abspath(path.join(path.dirname(__file__), ".."))
+    projectDir = Path(__file__).resolve().parent.parent
 
     @staticmethod
     def getPath(relativeProjectPath: str):
-        return path.join(Core.projectDir, relativeProjectPath.replace('/', sep))
+        return Core.projectDir / PurePosixPath(relativeProjectPath)
+    
+    @staticmethod
+    def inverseLerp(start, end, value):
+        return (value - start) / (end - start)
+    
+    @staticmethod
+    def rotateY90(vec3: glm.vec3, direction = 1):
+        return glm.vec3(-vec3.z * direction, vec3.y, vec3.x * direction)

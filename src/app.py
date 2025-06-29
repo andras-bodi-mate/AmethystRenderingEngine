@@ -12,17 +12,18 @@ from material import Material
 class App:
     def __init__(self):
         self.window = Window()
-        self.camera = Camera()
-        self.scene = Scene()
+        self.camera = Camera(cameraPathMeshPath = "res/models/cameraPath.obj")
+        self.scene = Scene("res/scenes/monkey/monkey.gltf")
 
-        self.scene.addObject(SingleObject(Mesh("res/models/monkeySmooth.obj"), Material("shaders/basicVertexShader.glsl", "shaders/basicFragmentShader.glsl")))
+        #self.scene.addObject(SingleObject(Mesh("res/models/sponza.obj"), Material("shaders/basicVertexShader.glsl", "shaders/basicFragmentShader.glsl")))
+        #print("Object added.")
 
         self.isRunning = True
 
     def draw(self):
-        self.scene.updateViewTransformUniforms(self.camera.viewTransform)
-        self.scene.updatePerspectiveTransformUniforms(self.camera.perspectiveTransform)
-        self.scene.draw()
+        Material.updateUniformForAllMaterials("viewTransform", self.camera.viewTransform)
+        Material.updateUniformForAllMaterials("perspectiveTransform", self.camera.perspectiveTransform)
+        self.scene.render()
 
     def renderLoop(self):
         glfw.make_context_current(self.window.window)
@@ -30,6 +31,7 @@ class App:
         while self.isRunning and not self.window.shouldClose():
             width, height = glfw.get_framebuffer_size(self.window.window)
             self.window.glContext.viewport = (0, 0, width, height)
+
             self.camera.updateMatrices(width / height)
 
             self.window.glContext.clear(0.1, 0.1, 0.1)

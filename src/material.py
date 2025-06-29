@@ -3,6 +3,13 @@ import moderngl as gl
 from core import Core
 
 class Material:
+    materials: list["Material"] = []
+
+    @staticmethod
+    def updateUniformForAllMaterials(uniform, value):
+        for material in Material.materials:
+            material.shaderProgram[uniform].write(value)
+
     def __init__(self, vertexShaderPath, fragmentShaderPath):
         self.glContext = gl.get_context()
 
@@ -11,3 +18,5 @@ class Material:
                 vertex_shader = vertexShaderFile.read(),
                 fragment_shader = fragmentShaderFile.read()
             )
+
+        Material.materials.append(self)

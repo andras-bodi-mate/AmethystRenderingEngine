@@ -1,25 +1,23 @@
+from abc import ABC
+
 import moderngl as gl
+from pyglm import glm
 
 from mesh import Mesh
 from material import Material
 
 class Object:
-    def __init__(self, mesh: Mesh, material: Material):
+    def __init__(self, mesh: Mesh):
         self.glContext = gl.get_context()
 
         self.mesh = mesh
-        self.material = material
-
-        self.vao: gl.VertexArray
 
 class SingleObject(Object):
-    def __init__(self, mesh, material):
-        super().__init__(mesh, material)
+    def __init__(self, mesh):
+        super().__init__(mesh)
 
-        self.vao = self.glContext.vertex_array(self.material.shaderProgram, [(self.mesh.vbo, "3f 3f", "in_position", "in_normal")], index_buffer = self.mesh.ibo)
-
-    def draw(self):
-        self.vao.render()
+    def render(self):
+        self.mesh.render()
 
 class InstancedObject(Object):
     pass
