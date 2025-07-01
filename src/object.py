@@ -4,25 +4,24 @@ import moderngl as gl
 from pyglm import glm
 
 from mesh import Mesh
-from material import Material
 from transform import Transform
 
 class Object:
-    def __init__(self, mesh: Mesh, transform: Transform, debugName: str | None = None):
+    def __init__(self, mesh: Mesh, transform: Transform, name: str | None = None):
         self.glContext = gl.get_context()
 
         self.mesh = mesh
         self.transform = transform
         self.children: list["Object"] = []
-        self.debugName = debugName
+        self.name = name
 
 class SingleObject(Object):
     def __init__(self, mesh: Mesh, transform: Transform, debugName: str | None = None):
         super().__init__(mesh, transform, debugName)
 
-    def render(self, ancestorTransforms: list[Transform] | None = None):
+    def render(self, parentTransform: Transform = None):
         if self.mesh:
-            finalObjectTransform = self.transform.transformation if not ancestorTransforms else reduce(lambda a, b: a * b, ancestorTransforms + [self.transform.transformation])
+            finalObjectTransform = parentTransform.transformation * self.transform.transformation if parentTransform else self.transform.transformation
 
             for part in self.mesh.parts:
                 part.material.shaderProgram["objectTransform"].write(finalObjectTransform)
@@ -31,7 +30,7 @@ class SingleObject(Object):
 
         if self.children:
             for child in self.children:
-                child.render((ancestorTransforms or []) + [self.transform.transformation])
+                child.render(self.transform)
 
 class InstancedObject(Object):
     pass

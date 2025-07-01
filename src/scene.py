@@ -19,15 +19,18 @@ class Scene:
 
         gltf = GLTF2().load(Core.getPath(path))
         with open(Core.getPath(path).parent / gltf.buffers[0].uri, "rb") as bufferFile:
-            buffer = bufferFile.read()
+            buffer = memoryview(bufferFile.read())
 
         mainScene = gltf.scenes[gltf.scene]
         loadedObjectIndices: dict[int, Object] = {}
 
+        self.numLoadedNodes = 0
+        material = Material("shaders/basicVertexShader.glsl", "shaders/basicFragmentShader.glsl")
+
         # TODO: abstract loading away into separate class
         def loadNode(nodeIndex, parentIndex: int | None = None):
             node: gltfNode = gltf.nodes[nodeIndex]
-            mesh: gltfMesh = gltf.meshes[node.mesh] if node.mesh else None
+            mesh: gltfMesh = gltf.meshes[node.mesh] if (node.mesh is not None) else None
 
             transform = Transform(node.matrix) if node.matrix else Transform.fromTranslationRotationScale(
                 glm.vec3(*node.translation) if node.translation else glm.vec3(0),
@@ -35,13 +38,17 @@ class Scene:
                 glm.vec3(*node.scale) if node.scale else glm.vec3(1)
             )
 
-            newObject = SingleObject(Mesh(gltf, buffer, mesh.primitives) if mesh and mesh.primitives else None, transform, node.name)
+            mesh = Mesh(gltf, buffer, mesh.primitives, material) if mesh and mesh.primitives else None
+            newObject = SingleObject(mesh, transform, node.name)
             loadedObjectIndices[nodeIndex] = newObject
 
             if parentIndex:
                 loadedObjectIndices[parentIndex].children.append(newObject)
             else:
                 self.objects.append(newObject)
+
+            self.numLoadedNodes += 1
+            print(f"Successfully loaded node: {node.name}")
 
             if node.children:
                 for childIndex in node.children:

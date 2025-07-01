@@ -1,12 +1,9 @@
 import threading
-import time
 import glfw
 
 from window import Window
 from scene import Scene
 from camera import Camera
-from object import SingleObject
-from mesh import Mesh
 from material import Material
 
 class App:
@@ -15,14 +12,12 @@ class App:
         self.camera = Camera(cameraPathMeshPath = "res/models/cameraPath.obj")
         self.scene = Scene("res/scenes/Sponza/sponza.gltf")
 
-        #self.scene.addObject(SingleObject(Mesh("res/models/sponza.obj"), Material("shaders/basicVertexShader.glsl", "shaders/basicFragmentShader.glsl")))
-        #print("Object added.")
-
         self.isRunning = True
 
     def draw(self):
         Material.updateUniformForAllMaterials("viewTransform", self.camera.viewTransform)
         Material.updateUniformForAllMaterials("perspectiveTransform", self.camera.perspectiveTransform)
+
         self.scene.render()
 
     def renderLoop(self):
@@ -39,7 +34,9 @@ class App:
             self.window.swapBuffers()
             #time.sleep(1 / 60.0)
 
+        glfw.make_context_current(None)
         glfw.set_window_should_close(self.window.window, True)
+        print("Window should close soon.")
 
     def eventLoop(self):
         while not self.window.shouldClose():
@@ -52,9 +49,6 @@ class App:
         self.window.pollEvents()
 
     def start(self):
-        #while not self.window.shouldClose():
-        #    self.mainLoop()
-
         glfw.make_context_current(None)
 
         renderThread = threading.Thread(target = self.renderLoop)
@@ -63,6 +57,10 @@ class App:
         self.eventLoop()
 
         self.isRunning = False
+        print("Waiting for thread to join...")
         renderThread.join()
+        print("Thread successfully joined.")
 
+        print("Terminating GLFW...")
         glfw.terminate()
+        print("GLFW terminated.")

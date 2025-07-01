@@ -4,6 +4,7 @@ from hashlib import sha256
 
 import moderngl as gl
 import numpy as np
+from numpy.lib.stride_tricks import as_strided
 from pygltflib import GLTF2
 from pygltflib import Primitive as gltfPrimitive, Accessor as gltfAccessor, BufferView as gltfBufferView, Material as gltfMaterial, Texture as gltfTexture
 
@@ -31,11 +32,37 @@ class MeshPart:
     }
 
     @staticmethod
-    def readBuffer(buffer: bytes, bufferView: gltfBufferView, accessor: gltfAccessor):
-        viewedBuffer = buffer[bufferView.byteOffset : (bufferView.byteOffset + bufferView.byteLength) : bufferView.byteStride]
+    def readBuffer(buffer: memoryview, bufferView: gltfBufferView, accessor: gltfAccessor):
+        componentDataType = MeshPart.componentTypeMapping[accessor.componentType]
+        elementSize = np.dtype(componentDataType).itemsize * MeshPart.numElementsMapping[accessor.type]
+
+        viewedBuffer = buffer[bufferView.byteOffset : (bufferView.byteOffset + bufferView.byteLength)]
+
+        if bufferView.byteStride and bufferView.byteStride != elementSize:
+            viewedBuffer = buffer[bufferView.byteOffset : (bufferView.byteOffset + bufferView.byteLength)]
+            viewedArray = np.frombuffer(viewedBuffer, dtype = np.uint8)
+
+            numElements = (bufferView.byteLength - elementSize) // bufferView.byteStride + 1
+            if numElements <= 0:
+                raise ValueError("Cannot fit even one element within the buffer given the stride, element size and buffer length")
+
+            # stridedBuffer = bytearray(numElements * elementSize)
+            # for i in range(numElements - 1):
+            #     start = i * bufferView.byteStride
+            #     end = start + elementSize
+            #     stridedBuffer[i * elementSize : (i + 1) * elementSize] = viewedBuffer[start : end]
+
+            stridedArray = as_strided(
+                viewedArray,
+                shape = (numElements, elementSize),
+                strides = (bufferView.byteStride, 1),  # move by `byteStride` bytes for each row, 1 byte per column
+                writeable = False
+            )
+
+            viewedBuffer = stridedArray.reshape(-1).tobytes()
 
         if accessor.byteOffset:
-            byteLength = np.dtype(MeshPart.componentTypeMapping[accessor.componentType]).itemsize * MeshPart.numElementsMapping[accessor.type] * accessor.count
+            byteLength = elementSize * accessor.count
             return viewedBuffer[accessor.byteOffset : (accessor.byteOffset + byteLength)]
         else:
             return viewedBuffer
@@ -44,7 +71,7 @@ class MeshPart:
     def createArrayFromBytes(buffer: bytes, accessor: gltfAccessor):
         return np.frombuffer(buffer, dtype = MeshPart.componentTypeMapping[accessor.componentType])
 
-    def __init__(self, gltf: GLTF2, buffer: bytes, primitive: gltfPrimitive):
+    def __init__(self, gltf: GLTF2, buffer: bytes, primitive: gltfPrimitive, material):
         self.glContext = gl.get_context()
 
         positionAccessor: gltfAccessor = gltf.accessors[primitive.attributes.POSITION]
@@ -72,7 +99,7 @@ class MeshPart:
         self.uvVbo = self.glContext.buffer(np.asarray(uvData, dtype = np.float32).tobytes())
         self.ibo = self.glContext.buffer(np.asarray(indexData, dtype = np.int32).tobytes())
 
-        self.material = Material("shaders/basicVertexShader.glsl", "shaders/basicFragmentShader.glsl")
+        self.material = material
 
         self.vao = self.glContext.vertex_array(self.material.shaderProgram, [
             (self.positionVbo, "3f", "in_position"),
@@ -88,66 +115,10 @@ class MeshPart:
         self.vao.render()
 
 class Mesh:
-    def __init__(self, gltf: GLTF2, buffer: bytes, primitives: list[gltfPrimitive]):
+    def __init__(self, gltf: GLTF2, buffer: bytes, primitives: list[gltfPrimitive], material):
         self.glContext = gl.get_context()
-        
-        # modelPath = Core.getPath(relativePath)
 
-        # with open(modelPath, "rb") as modelFile:
-        #     modelData = modelFile.read()
-        #     modelHash = sha256(modelData).hexdigest()
-
-        # cachedModelPath = Path(Core.getPath(f"cache/{Path(relativePath).name}.cache"))
-        # wasCacheUsed = False
-
-        # if cachedModelPath.exists():
-        #     with open(cachedModelPath, "rb") as cachedModelFile:
-        #         cachedModelData: tuple[int, tuple[list, list, list]] = pickle.load(cachedModelFile)
-        #         cachedModelHash, cachedModel = cachedModelData
-
-        #         if cachedModelHash == modelHash:
-        #             wasCacheUsed = True
-        #             uniqueVertices, vertexIndices = cachedModel
-        #             print("Using cached file.")
-
-        #         else:
-        #             print("Cached file has different hash, cache will not be used.")
-                
-        # else:
-        #     print("Cached file does not exist.")
-
-        # if not wasCacheUsed:
-        #     print("Cache could not be used.")
-
-        #     print("Loading model... This could take a while.")
-        #     model = load_model(modelPath)
-
-        #     allVertexPosition = [tuple(model.vertex_points[positionIndex].tolist()) for triangleIndices in model.point_indices for positionIndex in triangleIndices]
-        #     allVertexNormals = [tuple(model.vertex_normals[normalIndex].tolist()) for triangleIndices in model.normal_indices for normalIndex in triangleIndices]
-        #     allVertexUvs = [tuple(model.vertex_uv[uvIndex].tolist()) for triangleIndices in model.uv_indices for uvIndex in triangleIndices]
-
-        #     allVertexData = [(*allVertexPosition[i], *allVertexNormals[i], *allVertexUvs[i]) for i in range(len(allVertexPosition))]
-
-        #     uniqueVertexData: dict[tuple, int] = {}
-
-        #     for newVertexData in allVertexData:
-        #         if newVertexData not in uniqueVertexData:
-        #             uniqueVertexData[newVertexData] = len(uniqueVertexData)
-
-        #     uniqueVertices = list(uniqueVertexData.keys())
-        #     vertexIndices = [uniqueVertexData[vertexData] for vertexData in allVertexData]
-            
-        #     print("Model loaded.")
-
-        #     with open(cachedModelPath, "wb") as cachedModelFile:
-        #         print("Cache has been created.")
-
-        #         pickle.dump((modelHash, (uniqueVertices, vertexIndices)), cachedModelFile)
-
-        # self.vbo = self.glContext.buffer(np.array(uniqueVertices, dtype='f4').tobytes())
-        # self.ibo = self.glContext.buffer(np.array(vertexIndices, dtype='i4').tobytes())
-
-        self.parts = [MeshPart(gltf, buffer, primitive) for primitive in primitives]
+        self.parts = [MeshPart(gltf, buffer, primitive, material) for primitive in primitives]
 
     def render(self):
         for part in self.parts:
