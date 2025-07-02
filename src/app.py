@@ -5,12 +5,14 @@ from window import Window
 from scene import Scene
 from camera import Camera
 from material import Material
+from gltfLoader import GltfLoader
 
 class App:
     def __init__(self):
         self.window = Window()
         self.camera = Camera(cameraPathMeshPath = "res/models/cameraPath.obj")
-        self.scene = Scene("res/scenes/Sponza/sponza.gltf")
+        self.gltfLoader = GltfLoader()
+        self.scene = self.gltfLoader.loadScene("res/scenes/Sponza/Sponza.gltf")
 
         self.isRunning = True
 
