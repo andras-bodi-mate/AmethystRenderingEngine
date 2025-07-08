@@ -10,7 +10,7 @@ class Camera:
         self.forward = glm.vec3(0, 0, -1)
         self.up = glm.vec3(0.0, 1.0, 0.0)
 
-        self.perspectiveTransform: glm.mat4x4
+        self.projectionTransform: glm.mat4x4
 
         if cameraPathMeshPath:
             self.cameraPath: list[glm.vec3] = []
@@ -62,6 +62,6 @@ class Camera:
         #alpha = elapsedTime * 0.2
         #self.forward = glm.vec3(glm.cos(alpha), 0, glm.sin(alpha))
 
-        self.perspectiveTransform = glm.perspective(glm.radians(self.fov), aspectRatio, 0.1, 1000.0)
+        self.projectionTransform = glm.perspective(glm.radians(self.fov), aspectRatio, 0.1, 1000.0)
 
         self.viewTransform = glm.lookAt(self.position, self.position + self.forward, self.up)

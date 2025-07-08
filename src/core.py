@@ -6,8 +6,11 @@ class Core:
     projectDir = Path(__file__).resolve().parent.parent
 
     @staticmethod
-    def getPath(relativeProjectPath: str):
-        return Core.projectDir / PurePosixPath(relativeProjectPath)
+    def getPath(path: str | Path):
+        if isinstance(path, Path) and path.exists():
+            return path
+        else:
+            return Core.projectDir / PurePosixPath(path)
     
     @staticmethod
     def inverseLerp(start, end, value):

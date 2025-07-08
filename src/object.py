@@ -24,7 +24,7 @@ class SingleObject(Object):
             finalObjectTransform = parentTransform.transformation * self.transform.transformation if parentTransform else self.transform.transformation
 
             for part in self.mesh.parts:
-                part.material.shaderProgram["objectTransform"].write(finalObjectTransform)
+                part.material.shaderProgram.setUniform("u_objectTransform", finalObjectTransform)
 
             self.mesh.render()
 

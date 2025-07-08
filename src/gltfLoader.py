@@ -1,18 +1,20 @@
 from pathlib import Path
+from urllib.parse import unquote
 
 from pyglm import glm
 from pygltflib import GLTF2, Scene as GltfScene, Node as GltfNode, Mesh as GltfMesh, Material as GltfMaterial, Texture as GltfTexture, Image as GltfImage, Sampler as GltfSampler, BufferView as GltfBufferView, Accessor as GltfAccessor, Primitive as GltfPrimitive
 import moderngl as gl
-from PIL import Image
 import numpy as np
 
 from core import Core
 from scene import Scene
 from object import Object, SingleObject
 from mesh import Mesh, MeshPart
-from material import Material
+from materials import PbrMaterial
 from texture import Texture, Sampler
+from image import Image
 from transform import Transform
+from shaderProgram import ShaderProgram
 
 class GltfLoader:
     magnificationFilterMapping = {
@@ -55,6 +57,10 @@ class GltfLoader:
     }
 
     @staticmethod
+    def getPathFromUri(uri: str):
+        return  Path(unquote(uri))
+
+    @staticmethod
     def readBuffer(buffer: memoryview, bufferView: GltfBufferView, accessor: GltfAccessor):
         componentDataType = GltfLoader.componentTypeMapping[accessor.componentType]
         elementSize = np.dtype(componentDataType).itemsize * GltfLoader.numElementsMapping[accessor.type]
@@ -68,12 +74,6 @@ class GltfLoader:
             numElements = (bufferView.byteLength - elementSize) // bufferView.byteStride + 1
             if numElements <= 0:
                 raise ValueError("Cannot fit even one element within the buffer given the stride, element size and buffer length")
-
-            # stridedBuffer = bytearray(numElements * elementSize)
-            # for i in range(numElements - 1):
-            #     start = i * bufferView.byteStride
-            #     end = start + elementSize
-            #     stridedBuffer[i * elementSize : (i + 1) * elementSize] = viewedBuffer[start : end]
 
             stridedArray = np.lib.stride_tricks.as_strided(
                 viewedArray,
@@ -98,14 +98,13 @@ class GltfLoader:
         pass
 
     def loadTexture(self, gltfTexture: GltfTexture, color: list[float] | None = None):
-        #sampler: Sampler = self.loadSampler(self.gltf.samplers[gltfTexture.sampler] )
         gltfSampler: GltfSampler = self.gltf.samplers[gltfTexture.sampler] if gltfTexture else None
 
         if gltfTexture:
-            minificationFilter = GltfLoader.minificationFilterMapping[gltfSampler.minFilter]
-            magnificationFilter = GltfLoader.magnificationFilterMapping[gltfSampler.magFilter]
-            doRepeatX = GltfLoader.repeatModeMapping[gltfSampler.wrapS]
-            doRepeatY = GltfLoader.repeatModeMapping[gltfSampler.wrapT]
+            minificationFilter = GltfLoader.minificationFilterMapping[gltfSampler.minFilter] if gltfSampler.minFilter else gl.LINEAR
+            magnificationFilter = GltfLoader.magnificationFilterMapping[gltfSampler.magFilter] if gltfSampler.magFilter else gl.LINEAR
+            doRepeatX = GltfLoader.repeatModeMapping[gltfSampler.wrapS] if gltfSampler.wrapS else False
+            doRepeatY = GltfLoader.repeatModeMapping[gltfSampler.wrapT]if gltfSampler.wrapT else False
 
         else:
             minificationFilter = gl.LINEAR
@@ -116,23 +115,21 @@ class GltfLoader:
         if gltfTexture:
             gltfImage: GltfImage = self.gltf.images[gltfTexture.source]
 
-            with Image.open(self.gltfDir / Path(gltfImage.uri)).convert("RGB") as image:
-                return Texture(image, minificationFilter, magnificationFilter, doRepeatX, doRepeatY)
+            image = Image.open(self.gltfDir / self.getPathFromUri(gltfImage.uri))
+            return Texture(image, minificationFilter, magnificationFilter, doRepeatX, doRepeatY)
             
         else:
-            print("from color")
+            print("Material loaded from color.")
             return Texture.fromColor(glm.vec3(color), minificationFilter, magnificationFilter, doRepeatX, doRepeatY)
 
     def loadMaterial(self, gltfMaterial: GltfMaterial):
         pbr = gltfMaterial.pbrMetallicRoughness
 
         baseColorTexture = self.loadTexture(self.gltf.textures[pbr.baseColorTexture.index] if pbr.baseColorTexture else None, pbr.baseColorFactor)
-        #normalTexture = self.loadTexture(self.gltf.textures[gltfMaterial.normalTexture.index])
-        #metallicRoughnessTexture = self.loadTexture(self.gltf.textures[pbr.metallicRoughnessTexture.index] if pbr.metallicRoughnessTexture else None, (pbr.metallicFactor, pbr.roughnessFactor, 0))
+        normalTexture = self.loadTexture(self.gltf.textures[gltfMaterial.normalTexture.index] if gltfMaterial.normalTexture else None, (0, 0, 0))
+        metallicRoughnessTexture = self.loadTexture(self.gltf.textures[pbr.metallicRoughnessTexture.index] if pbr.metallicRoughnessTexture else None, (pbr.metallicFactor, pbr.roughnessFactor, 0))
 
-        print("Loaded material.")
-
-        return Material("shaders/basicVertexShader.glsl", "shaders/basicFragmentShader.glsl", baseColorTexture)
+        return PbrMaterial(self.mainShader, baseColorTexture, normalTexture, metallicRoughnessTexture)
 
     def loadMeshPart(self, gltfPrimitive: GltfPrimitive):
         positionAccessor: GltfAccessor = self.gltf.accessors[gltfPrimitive.attributes.POSITION]
@@ -162,6 +159,9 @@ class GltfLoader:
         return Mesh([self.loadMeshPart(gltfPrimitive) for gltfPrimitive in gltfMesh.primitives]) if gltfMesh and gltfMesh.primitives else None
 
     def loadNode(self, gltfNode: GltfNode):
+        if "decal" in gltfNode.name:
+            return None
+
         mesh: GltfMesh = self.gltf.meshes[gltfNode.mesh] if (gltfNode.mesh is not None) else None
 
         transform = Transform(gltfNode.matrix) if gltfNode.matrix else Transform.fromTranslationRotationScale(
@@ -175,6 +175,9 @@ class GltfLoader:
     def loadNodeTree(self, baseNodeIndex: int, parentIndex: int | None = None):
         baseNode: GltfNode = self.gltf.nodes[baseNodeIndex]
         newObject = self.loadNode(baseNode)
+
+        if not newObject:
+            return
 
         self.loadedObjectIndices[baseNodeIndex] = newObject
 
@@ -194,15 +197,20 @@ class GltfLoader:
         self.gltf = GLTF2().load(path)
         self.gltfDir = path.parent
 
-        with open(self.gltfDir / self.gltf.buffers[0].uri, "rb") as bufferFile:
+        with open(self.gltfDir / self.getPathFromUri(self.gltf.buffers[0].uri), "rb") as bufferFile:
             self.buffer = memoryview(bufferFile.read())
 
         self.gltfMainScene: GltfScene = self.gltf.scenes[self.gltf.scene]
 
         self.scene = Scene()
+        self.mainShader = ShaderProgram("shaders/basicVertexShader.glsl", "shaders/pbrFragmentShader.glsl")
 
         self.loadedObjectIndices: dict[int, Object] = {}
-        self.materials = [self.loadMaterial(gltfMaterial) for gltfMaterial in self.gltf.materials]
+        
+        self.materials = []
+        for i, gltfMaterial in enumerate(self.gltf.materials):
+            self.materials.append(self.loadMaterial(gltfMaterial))
+            print(f"Loaded material. ({i + 1} / {len(self.gltf.materials)})")
 
         for nodeIndex in self.gltfMainScene.nodes:
             self.loadNodeTree(nodeIndex)

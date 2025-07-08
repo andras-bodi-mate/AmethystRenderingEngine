@@ -2,39 +2,40 @@ import threading
 import glfw
 
 from window import Window
-from scene import Scene
 from camera import Camera
-from material import Material
+from materials import Material
 from gltfLoader import GltfLoader
 
 class App:
     def __init__(self):
         self.window = Window()
-        self.camera = Camera(cameraPathMeshPath = "res/models/cameraPath.obj")
+        self.camera = Camera(cameraPathMeshPath = "res/models/cameraPath2.obj")
         self.gltfLoader = GltfLoader()
-        self.scene = self.gltfLoader.loadScene("res/scenes/Sponza/Sponza.gltf")
+        self.scene = self.gltfLoader.loadScene("res/scenes/Scifi Helmet/scifiHelmet.gltf")
 
         self.isRunning = True
 
     def draw(self):
-        Material.updateUniformForAllMaterials("viewTransform", self.camera.viewTransform)
-        Material.updateUniformForAllMaterials("perspectiveTransform", self.camera.perspectiveTransform)
+        Material.updateUniformForAllMaterials("u_viewTransform", self.camera.viewTransform)
+        Material.updateUniformForAllMaterials("u_projectionTransform", self.camera.projectionTransform)
+        Material.updateUniformForAllMaterials("u_cameraPosition", self.camera.position)
 
         self.scene.render()
 
     def renderLoop(self):
         glfw.make_context_current(self.window.window)
+        self.window.glContext.multisample = True
+        self.window.glContext.depth_func = "<="
 
         while self.isRunning and not self.window.shouldClose():
             width, height = glfw.get_framebuffer_size(self.window.window)
             self.window.glContext.viewport = (0, 0, width, height)
 
-            self.camera.updateMatrices(width / height)
+            self.camera.updateMatrices(width / height if height != 0 else 1.0)
 
-            self.window.glContext.clear(0.1, 0.1, 0.1)
+            self.window.glContext.clear(0.7, 0.7, 0.7)
             self.draw()
             self.window.swapBuffers()
-            #time.sleep(1 / 60.0)
 
         glfw.make_context_current(None)
         glfw.set_window_should_close(self.window.window, True)
@@ -45,7 +46,6 @@ class App:
             self.window.pollEvents()
 
     def mainLoop(self):
-        self.window.glContext.clear(0.1, 0.1, 0.1)
         self.draw()
         self.window.swapBuffers()
         self.window.pollEvents()
@@ -59,9 +59,9 @@ class App:
         self.eventLoop()
 
         self.isRunning = False
-        print("Waiting for thread to join...")
+        print("Waiting for rendering thread to stop...")
         renderThread.join()
-        print("Thread successfully joined.")
+        print("Rendering thread successfully stopped.")
 
         print("Terminating GLFW...")
         glfw.terminate()
