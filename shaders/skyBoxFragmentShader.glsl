@@ -8,7 +8,7 @@ layout (location = 0) out vec4 fragColor;
   
 void main()
 {
-    vec3 envColor = texture(u_environmentTexture, v_position).rgb;
+    vec3 envColor = textureLod(u_environmentTexture, v_position, 4.0).rgb;
     
     envColor = envColor / (envColor + vec3(1.0));
     envColor = pow(envColor, vec3(1.0/2.2)); 

@@ -16,10 +16,10 @@ dependencies = [
     { name = "moderngl" },
     { name = "numpy" },
     { name = "opencv-python" },
-    { name = "openimageio" },
     { name = "pyglm" },
     { name = "pygltflib" },
     { name = "pyobjloader" },
+    { name = "pyopengl" },
 ]
 
 [package.metadata]
@@ -28,10 +28,10 @@ requires-dist = [
     { name = "moderngl", specifier = ">=5.12.0" },
     { name = "numpy", specifier = ">=2.3.1" },
     { name = "opencv-python", specifier = ">=4.11.0.86" },
-    { name = "openimageio", specifier = ">=3.0.6.1" },
     { name = "pyglm", specifier = ">=2.8.2" },
     { name = "pygltflib", specifier = ">=1.16.4" },
     { name = "pyobjloader", specifier = ">=0.0.7" },
+    { name = "pyopengl", specifier = ">=3.1.9" },
 ]
 
 [[package]]
@@ -179,20 +179,6 @@ wheels = [
 ]
 
 [[package]]
-name = "openimageio"
-version = "3.0.6.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5a/19/8145850e97330e08a50d0c6c6c2bd785ba26b12794adb9013c57930a85ed/openimageio-3.0.6.1.tar.gz", hash = "sha256:17df52c649ffb2965cacd5d123d7e1546bfa0942c973c4746a41bc29b0412102", size = 6041562, upload-time = "2025-05-03T03:55:04.292Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/6f/45/dbdb450da1c011e336a74e12c52ab4c62df7da09d804b77d4bb98e769c39/openimageio-3.0.6.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:24718e46be539c97c67db203b5b9ba6a710a14ba45cd752465364abaa145cced", size = 7071956, upload-time = "2025-05-03T03:54:36.813Z" },
-    { url = "https://files.pythonhosted.org/packages/40/4e/b6dafe9445c561495a744f703a09cd9664bc9c89217e9aedc45845a59f9e/openimageio-3.0.6.1-cp313-cp313-macosx_11_0_x86_64.whl", hash = "sha256:91ca9907b3d39660db01034f109e5f526adce68445d81343a8fa6945932fafba", size = 7518891, upload-time = "2025-05-03T03:54:39.173Z" },
-    { url = "https://files.pythonhosted.org/packages/e7/c6/146844892069eb3601b8414a966df3aaa4e739248eadcfed8ba1a302100b/openimageio-3.0.6.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:994279f9e88af575cbac1f40e6c4e78a5563dbcba1019b371d44cf1d3506a3bf", size = 7175601, upload-time = "2025-05-03T03:54:41.013Z" },
-    { url = "https://files.pythonhosted.org/packages/d2/3e/b0874c61be268e10ad948914ba896c375db6fa0bc0c681617fd19fcb1f9d/openimageio-3.0.6.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:aae8693d3d635fd97d09625a79515ccf3085c346f9d3f3e51c925f198d9031b2", size = 7390483, upload-time = "2025-05-03T03:54:42.363Z" },
-    { url = "https://files.pythonhosted.org/packages/53/45/43a278e4ab05f833b8d890e770b0f6115248c2e0ba00b605595e639430a3/openimageio-3.0.6.1-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c87b442846a182058384afe84575013c62dbc3a20392af3574901940d9fc3379", size = 7208164, upload-time = "2025-05-03T03:54:43.959Z" },
-    { url = "https://files.pythonhosted.org/packages/60/87/6397612c8333f0b9916120566a63e896d88fda4146bc2a9a7ec4a6d81c29/openimageio-3.0.6.1-cp313-cp313-win_amd64.whl", hash = "sha256:c06eeb7802b402af90de8a31e4e234a2c1d20478deacdba10869ecbf7dfca87f", size = 7869353, upload-time = "2025-05-03T03:54:45.316Z" },
-]
-
-[[package]]
 name = "packaging"
 version = "25.0"
 source = { registry = "https://pypi.org/simple" }
@@ -246,6 +232,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/2e/02/8ef7aac10e2ca883ec95f09d686cdd51786af46a3cfc86a67cc4b8abd6fa/pyobjloader-0.0.7.tar.gz", hash = "sha256:61d8fe20ff8a48524bbac63dd7049153238d8fd5a63fffa0d0e16d9f43ab8d9d", size = 5132, upload-time = "2024-11-14T18:13:17.53Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5c/ff/f06973d43ae913e1346ead7ab44d3ee8be567695b302768b40fad08eee8b/pyobjloader-0.0.7-py3-none-any.whl", hash = "sha256:df69797cc3883a8cf830c2e0f1d63a7cce2528412e4f28d429477ca2fee03374", size = 5452, upload-time = "2024-11-14T18:13:16.153Z" },
+]
+
+[[package]]
+name = "pyopengl"
+version = "3.1.9"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c0/42/71080db298df3ddb7e3090bfea8fd7c300894d8b10954c22f8719bd434eb/pyopengl-3.1.9.tar.gz", hash = "sha256:28ebd82c5f4491a418aeca9672dffb3adbe7d33b39eada4548a5b4e8c03f60c8", size = 1913642, upload-time = "2025-01-20T02:17:53.263Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/92/44/8634af40b0db528b5b37e901c0dc67321354880d251bf8965901d57693a5/PyOpenGL-3.1.9-py3-none-any.whl", hash = "sha256:15995fd3b0deb991376805da36137a4ae5aba6ddbb5e29ac1f35462d130a3f77", size = 3190341, upload-time = "2025-01-20T02:17:50.913Z" },
 ]
 
 [[package]]

@@ -4,7 +4,7 @@ from core import Core
 from debug import Debug
 
 class Camera:
-    def __init__(self, fov = 100, cameraPathMeshPath = None):
+    def __init__(self, fov = 80, cameraPath = None, cameraPathScale = 1.0):
         self.fov = fov
         self.position = glm.vec3(0.0, 1, 0)
         self.forward = glm.vec3(0, 0, -1)
@@ -12,13 +12,13 @@ class Camera:
 
         self.projectionTransform: glm.mat4x4
 
-        if cameraPathMeshPath:
+        if cameraPath:
             self.cameraPath: list[glm.vec3] = []
 
-            with open(Core.getPath(cameraPathMeshPath), "r") as cameraPathMeshFile:
+            with open(Core.getPath(cameraPath), "r") as cameraPathMeshFile:
                 for line in cameraPathMeshFile.readlines():
                     if line[0] == 'v':
-                        self.cameraPath.append(glm.vec3(*map(float, line[2:].split())))
+                        self.cameraPath.append(glm.vec3(*map(float, line[2:].split())) * cameraPathScale)
         else:
             self.cameraPath = None
         

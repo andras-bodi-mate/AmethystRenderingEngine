@@ -17,15 +17,45 @@ class Sampler:
 
 class Texture:
     @staticmethod
-    def fromColor(color: glm.vec3, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, anisotropy = 16.0):
-        imageData = np.array(((glm.clamp(glm.ivec3(color * 255), 0, 255).to_tuple(),),), dtype = np.uint8)
-        return Texture(Image(imageData), minificationFilter, magnificationFilter, doRepeatX, doRepeatY, anisotropy)
+    def fromColor(color: glm.vec3, numComponents = 3, minificationFilter = gl.LINEAR, magnificationFilter = gl.LINEAR, doRepeatX = False, doRepeatY = False, anisotropy = 16.0, dataType = "f1", internalFormat = None):
+        if dataType == "f1":
+            print(type(color))
+            if isinstance(color, (glm.vec1, float, int)):
+                unclampedColor = glm.ivec1(color * 255)
 
-    def __init__(self, image: Image, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, anisotropy = 16.0, dataType = "f1", internalFormat = None):
+            elif isinstance(color, glm.vec2):
+                unclampedColor = glm.ivec2(color * 255)
+
+            elif isinstance(color, glm.vec3):
+                unclampedColor = glm.ivec3(color * 255)
+
+            elif isinstance(color, glm.vec4):
+                unclampedColor = glm.ivec4(color * 255)
+
+            pixel = glm.clamp(unclampedColor, 0, 255)
+
+        elif isinstance(color, (float, int)):
+            pixel = glm.vec1(color)
+
+        else:
+            pixel = color
+
+        imageData = np.array(((pixel.to_tuple(),),), dtype = np.uint8 if dataType == "f1" else np.float16)
+        return Texture(1, 1, numComponents, imageData, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, anisotropy, dataType, internalFormat)
+    
+    @staticmethod
+    def fromImage(image: Image, minificationFilter = gl.LINEAR, magnificationFilter = gl.LINEAR, doRepeatX = False, doRepeatY = False, anisotropy = 16.0, dataType = "f1", internalFormat = None):
+        return Texture(image.size[0], image.size[1], image.numComponents, image.data, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, anisotropy, dataType, internalFormat)
+
+    @staticmethod
+    def createBlank(width: int, height: int, numComponents = 3, minificationFilter = gl.LINEAR, magnificationFilter = gl.LINEAR, doRepeatX = False, doRepeatY = False, anisotropy = 16.0, dataType = "f1", internalFormat = None):
+        return Texture(width, height, numComponents, None, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, anisotropy, dataType, internalFormat)
+
+    def __init__(self, width: int, height: int, numComponents = 3, data: bytes = None, minificationFilter = gl.LINEAR, magnificationFilter = gl.LINEAR, doRepeatX = False, doRepeatY = False, anisotropy = 16.0, dataType = "f1", internalFormat = None):
         self.glContext = gl.get_context()
-        print(image.size, image.numComponents)
-        self.texture = self.glContext.texture(image.size, image.numComponents, image.toBytes(), dtype = dataType, internal_format = internalFormat)
+        self.texture = self.glContext.texture((width, height), numComponents, data, dtype = dataType, internal_format = internalFormat)
         self.sampler = Sampler(self.texture, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, anisotropy)
 
     def use(self, location = 0):
         self.sampler.use(location)
+        self.texture.use(location)

@@ -15,4 +15,7 @@ class ShaderProgram:
             )
 
     def setUniform(self, uniform, value):
-        self.shaderProgram[uniform].write(value)
+        if isinstance(value, (float, int, bool, list, tuple)):
+            self.shaderProgram[uniform] = value
+        else:
+            self.shaderProgram[uniform].write(value)

@@ -61,9 +61,10 @@
 					"attributes":{
 						"POSITION":0,
 						"NORMAL":1,
-						"TEXCOORD_0":2
+						"TEXCOORD_0":2,
+						"TANGENT":3
 					},
-					"indices":3,
+					"indices":4,
 					"material":0
 				}
 			]
@@ -91,7 +92,7 @@
 		},
 		{
 			"mimeType":"image/png",
-			"name":"Map #2",
+			"name":"Map 2",
 			"uri":"Textures/Map%202.png"
 		},
 		{
@@ -104,7 +105,7 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":26972,
+			"count":30212,
 			"max":[
 				12.520315170288086,
 				18.77880096435547,
@@ -120,17 +121,23 @@
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":26972,
+			"count":30212,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":26972,
+			"count":30212,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
+			"componentType":5126,
+			"count":30212,
+			"type":"VEC4"
+		},
+		{
+			"bufferView":4,
 			"componentType":5123,
 			"count":100623,
 			"type":"SCALAR"
@@ -139,26 +146,32 @@
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":323664,
+			"byteLength":362544,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":323664,
-			"byteOffset":323664,
+			"byteLength":362544,
+			"byteOffset":362544,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":215776,
-			"byteOffset":647328,
+			"byteLength":241696,
+			"byteOffset":725088,
+			"target":34962
+		},
+		{
+			"buffer":0,
+			"byteLength":483392,
+			"byteOffset":966784,
 			"target":34962
 		},
 		{
 			"buffer":0,
 			"byteLength":201246,
-			"byteOffset":863104,
+			"byteOffset":1450176,
 			"target":34963
 		}
 	],
@@ -170,7 +183,7 @@
 	],
 	"buffers":[
 		{
-			"byteLength":1064352,
+			"byteLength":1651424,
 			"uri":"cerberus.bin"
 		}
 	]

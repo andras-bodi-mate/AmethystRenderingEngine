@@ -15,6 +15,8 @@ from texture import Texture, Sampler
 from image import Image
 from transform import Transform
 from shaderProgram import ShaderProgram
+from environmentMap import EnvironmentMap
+from environment import Environment
 
 class GltfLoader:
     magnificationFilterMapping = {
@@ -94,10 +96,10 @@ class GltfLoader:
     def createArrayFromBytes(buffer: bytes, accessor: GltfAccessor):
         return np.frombuffer(buffer, dtype = GltfLoader.componentTypeMapping[accessor.componentType])
 
-    def __init__(self):
-        pass
+    def __init__(self, environmentMapPath: Path | str):
+        self.environment = Environment(EnvironmentMap(environmentMapPath))
 
-    def loadTexture(self, gltfTexture: GltfTexture, color: list[float] | None = None):
+    def loadTexture(self, gltfTexture: GltfTexture, color: glm.vec3 | None = None, numComponents = 3, dataType = "f1"):
         gltfSampler: GltfSampler = self.gltf.samplers[gltfTexture.sampler] if gltfTexture else None
 
         if gltfTexture:
@@ -116,44 +118,51 @@ class GltfLoader:
             gltfImage: GltfImage = self.gltf.images[gltfTexture.source]
 
             image = Image.open(self.gltfDir / self.getPathFromUri(gltfImage.uri))
-            return Texture(image, minificationFilter, magnificationFilter, doRepeatX, doRepeatY)
+            return Texture.fromImage(image, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, dataType = dataType)
             
         else:
             print("Material loaded from color.")
-            return Texture.fromColor(glm.vec3(color), minificationFilter, magnificationFilter, doRepeatX, doRepeatY)
+            return Texture.fromColor(color, numComponents, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, dataType = dataType)
 
     def loadMaterial(self, gltfMaterial: GltfMaterial):
         pbr = gltfMaterial.pbrMetallicRoughness
 
         baseColorTexture = self.loadTexture(self.gltf.textures[pbr.baseColorTexture.index] if pbr.baseColorTexture else None, pbr.baseColorFactor)
-        normalTexture = self.loadTexture(self.gltf.textures[gltfMaterial.normalTexture.index] if gltfMaterial.normalTexture else None, (0, 0, 0))
-        metallicRoughnessTexture = self.loadTexture(self.gltf.textures[pbr.metallicRoughnessTexture.index] if pbr.metallicRoughnessTexture else None, (pbr.metallicFactor, pbr.roughnessFactor, 0))
+        normalTexture = self.loadTexture(self.gltf.textures[gltfMaterial.normalTexture.index] if gltfMaterial.normalTexture else None, glm.vec3(0.0, 0.0, 0.0))
+        metallicRoughnessTexture = self.loadTexture(self.gltf.textures[pbr.metallicRoughnessTexture.index] if pbr.metallicRoughnessTexture else None, glm.vec3(0.0, pbr.roughnessFactor, pbr.metallicFactor), numComponents = 3)
+        ambientOcclusionTexture = self.loadTexture(self.gltf.textures[gltfMaterial.occlusionTexture.index] if gltfMaterial.occlusionTexture else None, 1.0, numComponents = 1)
+        emissiveTexture = self.loadTexture(self.gltf.textures[gltfMaterial.emissiveTexture.index] if gltfMaterial.emissiveTexture else None, glm.vec3(0.0, 0.0, 0.0))
 
-        return PbrMaterial(self.mainShader, baseColorTexture, normalTexture, metallicRoughnessTexture)
+        environmentMap = self.environment.environmentMap
+        return PbrMaterial(self.mainShader, baseColorTexture, normalTexture, metallicRoughnessTexture, ambientOcclusionTexture, emissiveTexture, environmentMap.diffuseIrradienceCubemap, environmentMap.specularPrefilteredCubemap, environmentMap.brdfLookupTable)
 
     def loadMeshPart(self, gltfPrimitive: GltfPrimitive):
         positionAccessor: GltfAccessor = self.gltf.accessors[gltfPrimitive.attributes.POSITION]
         normalAccessor: GltfAccessor = self.gltf.accessors[gltfPrimitive.attributes.NORMAL]
         uvAccessor: GltfAccessor = self.gltf.accessors[gltfPrimitive.attributes.TEXCOORD_0]
+        tangentAccessor: GltfAccessor = self.gltf.accessors[gltfPrimitive.attributes.TANGENT]
         indexAccessor: GltfAccessor = self.gltf.accessors[gltfPrimitive.indices]
 
         positionBufferView: GltfBufferView = self.gltf.bufferViews[positionAccessor.bufferView]
         normalBufferView: GltfBufferView = self.gltf.bufferViews[normalAccessor.bufferView]
         uvBufferView: GltfBufferView = self.gltf.bufferViews[uvAccessor.bufferView]
+        tangentBufferView: GltfBufferView = self.gltf.bufferViews[tangentAccessor.bufferView]
         indexBufferView: GltfBufferView = self.gltf.bufferViews[indexAccessor.bufferView]
 
         vertexDataBytes = GltfLoader.readBuffer(self.buffer, positionBufferView, positionAccessor)
         normalDataBytes = GltfLoader.readBuffer(self.buffer, normalBufferView, normalAccessor)
         uvDataBytes = GltfLoader.readBuffer(self.buffer, uvBufferView, uvAccessor)
+        tangentDataBytes = GltfLoader.readBuffer(self.buffer, tangentBufferView, tangentAccessor)
         indexDataBytes = GltfLoader.readBuffer(self.buffer, indexBufferView, indexAccessor)
 
         vertexData = np.asarray(GltfLoader.createArrayFromBytes(vertexDataBytes, positionAccessor), dtype = np.float32).tobytes()
         normalData = np.asarray(GltfLoader.createArrayFromBytes(normalDataBytes, normalAccessor), dtype = np.float32).tobytes()
         uvData = np.asarray(GltfLoader.createArrayFromBytes(uvDataBytes, uvAccessor), dtype = np.float32).tobytes()
+        tangentData = np.asarray(GltfLoader.createArrayFromBytes(tangentDataBytes, tangentAccessor), dtype = np.float32).tobytes()
         indexData = np.asarray(GltfLoader.createArrayFromBytes(indexDataBytes, indexAccessor), dtype = np.int32).tobytes()
 
 
-        return MeshPart(vertexData, normalData, uvData, indexData, self.materials[gltfPrimitive.material])
+        return MeshPart(vertexData, normalData, uvData, tangentData, indexData, self.materials[gltfPrimitive.material])
 
     def loadMesh(self, gltfMesh: GltfMesh):
         return Mesh([self.loadMeshPart(gltfPrimitive) for gltfPrimitive in gltfMesh.primitives]) if gltfMesh and gltfMesh.primitives else None
@@ -202,7 +211,7 @@ class GltfLoader:
 
         self.gltfMainScene: GltfScene = self.gltf.scenes[self.gltf.scene]
 
-        self.scene = Scene()
+        self.scene = Scene(self.environment)
         self.mainShader = ShaderProgram("shaders/basicVertexShader.glsl", "shaders/pbrFragmentShader.glsl")
 
         self.loadedObjectIndices: dict[int, Object] = {}

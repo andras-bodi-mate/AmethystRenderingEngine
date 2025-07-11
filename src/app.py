@@ -1,16 +1,18 @@
 import threading
 import glfw
+from pyglm import glm
 
 from window import Window
 from camera import Camera
 from materials import Material
+from environment import Environment
 from gltfLoader import GltfLoader
 
 class App:
     def __init__(self):
         self.window = Window()
-        self.camera = Camera(cameraPathMeshPath = "res/models/cameraPath2.obj")
-        self.gltfLoader = GltfLoader()
+        self.camera = Camera(cameraPath = "res/models/cameraPath2.obj", cameraPathScale = 1.0)
+        self.gltfLoader = GltfLoader("res/environments/mountain.hdr")
         self.scene = self.gltfLoader.loadScene("res/scenes/Scifi Helmet/scifiHelmet.gltf")
 
         self.isRunning = True
@@ -26,6 +28,7 @@ class App:
         glfw.make_context_current(self.window.window)
         self.window.glContext.multisample = True
         self.window.glContext.depth_func = "<="
+        self.window.glContext.enable(self.window.glContext.DEPTH_TEST)
 
         while self.isRunning and not self.window.shouldClose():
             width, height = glfw.get_framebuffer_size(self.window.window)

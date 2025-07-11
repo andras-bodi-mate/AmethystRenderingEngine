@@ -9,8 +9,8 @@ dependencies = [
     "moderngl>=5.12.0",
     "numpy>=2.3.1",
     "opencv-python>=4.11.0.86",
-    "openimageio>=3.0.6.1",
     "pyglm>=2.8.2",
     "pygltflib>=1.16.4",
     "pyobjloader>=0.0.7",
+    "pyopengl>=3.1.9",
 ]
