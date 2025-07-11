@@ -7,13 +7,15 @@ from camera import Camera
 from materials import Material
 from environment import Environment
 from gltfLoader import GltfLoader
+from controller import Controller
 
 class App:
     def __init__(self):
         self.window = Window()
-        self.camera = Camera(cameraPath = "res/models/cameraPath2.obj", cameraPathScale = 1.0)
-        self.gltfLoader = GltfLoader("res/environments/mountain.hdr")
+        self.camera = Camera(self.window)
+        self.gltfLoader = GltfLoader("res/environments/restArea.hdr")
         self.scene = self.gltfLoader.loadScene("res/scenes/Scifi Helmet/scifiHelmet.gltf")
+        self.controller = Controller(self.window, self.camera)
 
         self.isRunning = True
 
@@ -29,12 +31,13 @@ class App:
         self.window.glContext.multisample = True
         self.window.glContext.depth_func = "<="
         self.window.glContext.enable(self.window.glContext.DEPTH_TEST)
+        self.window.glContext.enable(self.window.glContext.CULL_FACE)
 
         while self.isRunning and not self.window.shouldClose():
             width, height = glfw.get_framebuffer_size(self.window.window)
             self.window.glContext.viewport = (0, 0, width, height)
 
-            self.camera.updateMatrices(width / height if height != 0 else 1.0)
+            self.camera.update()
 
             self.window.glContext.clear(0.7, 0.7, 0.7)
             self.draw()
@@ -47,11 +50,7 @@ class App:
     def eventLoop(self):
         while not self.window.shouldClose():
             self.window.pollEvents()
-
-    def mainLoop(self):
-        self.draw()
-        self.window.swapBuffers()
-        self.window.pollEvents()
+            self.controller.update()
 
     def start(self):
         glfw.make_context_current(None)

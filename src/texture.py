@@ -44,17 +44,20 @@ class Texture:
         return Texture(1, 1, numComponents, imageData, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, anisotropy, dataType, internalFormat)
     
     @staticmethod
-    def fromImage(image: Image, minificationFilter = gl.LINEAR, magnificationFilter = gl.LINEAR, doRepeatX = False, doRepeatY = False, anisotropy = 16.0, dataType = "f1", internalFormat = None):
-        return Texture(image.size[0], image.size[1], image.numComponents, image.data, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, anisotropy, dataType, internalFormat)
+    def fromImage(image: Image, minificationFilter = gl.LINEAR, magnificationFilter = gl.LINEAR, doRepeatX = False, doRepeatY = False, anisotropy = 16.0, dataType = "f1", internalFormat = None, generateMipMaps = False):
+        return Texture(image.size[0], image.size[1], image.numComponents, image.data, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, anisotropy, dataType, internalFormat, generateMipMaps)
 
     @staticmethod
     def createBlank(width: int, height: int, numComponents = 3, minificationFilter = gl.LINEAR, magnificationFilter = gl.LINEAR, doRepeatX = False, doRepeatY = False, anisotropy = 16.0, dataType = "f1", internalFormat = None):
         return Texture(width, height, numComponents, None, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, anisotropy, dataType, internalFormat)
 
-    def __init__(self, width: int, height: int, numComponents = 3, data: bytes = None, minificationFilter = gl.LINEAR, magnificationFilter = gl.LINEAR, doRepeatX = False, doRepeatY = False, anisotropy = 16.0, dataType = "f1", internalFormat = None):
+    def __init__(self, width: int, height: int, numComponents = 3, data: bytes = None, minificationFilter = gl.LINEAR, magnificationFilter = gl.LINEAR, doRepeatX = False, doRepeatY = False, anisotropy = 16.0, dataType = "f1", internalFormat = None, generateMipMaps = False):
         self.glContext = gl.get_context()
         self.texture = self.glContext.texture((width, height), numComponents, data, dtype = dataType, internal_format = internalFormat)
         self.sampler = Sampler(self.texture, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, anisotropy)
+
+        if generateMipMaps:
+            self.texture.build_mipmaps()
 
     def use(self, location = 0):
         self.sampler.use(location)

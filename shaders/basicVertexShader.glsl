@@ -21,7 +21,7 @@ void main() {
 
     vec3 tangent = normalize(mat3(u_objectTransform) * a_tangent);
     vec3 normal = normalize(mat3(u_objectTransform) * a_normal);
-    vec3 bitangent = normalize(cross(normal, tangent));
+    vec3 bitangent = normalize(cross(normalize(a_normal + vec3(0.0001, 0.0, 0.0)), tangent));
 
     v_tangentBitangentNormal = mat3(tangent, bitangent, normal);
 

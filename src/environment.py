@@ -8,7 +8,7 @@ class Environment:
         self.environmentMap = environmentMap
         shaderProgram = ShaderProgram("shaders/skyBoxVertexShader.glsl", "shaders/skyBoxFragmentShader.glsl")
 
-        self.mesh = Mesh.fromModel("res//models//cube.obj", Material(shaderProgram))
+        self.mesh = Mesh.fromModel("res//models//backfaceCube.obj", Material(shaderProgram))
 
     def render(self):
         self.environmentMap.use()

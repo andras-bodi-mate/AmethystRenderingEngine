@@ -68,6 +68,7 @@ vec3[5] lightPositions = vec3[](
     vec3(6, -1.0, 0.0)
 );
 
+const float exposure = 0.8;
 const vec3 lightColor = vec3(1.0, 1.0, 1.0);
 const float numPrefilterLods = 5.0;
 
@@ -107,7 +108,7 @@ void main() {
     vec3 ambient = (kD * diffuse + specular) * ambientOcclusion;
     vec3 color = ambient;
 
-    float emissiveIntensity = 1.0; // You define this — can be per-material or uniform
+    float emissiveIntensity = 1.0;
     vec3 emissive = emissiveColor * emissiveIntensity;
 	
     color = color / (color + vec3(1.0));
@@ -115,6 +116,8 @@ void main() {
 
     color += emissive;
    
+    color = vec3(1.0) - exp(-color * exposure);
+    color = pow(color, vec3(1.0 / 2.2));
+
     fragColor = vec4(color, 1.0);
-    //fragColor = mix(vec4(ambientOcclusion, 0.0, 0.0, 1.0), vec4(color, 1.0), 0.00001);
 }

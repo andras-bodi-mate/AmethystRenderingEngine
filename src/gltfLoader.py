@@ -4,6 +4,7 @@ from urllib.parse import unquote
 from pyglm import glm
 from pygltflib import GLTF2, Scene as GltfScene, Node as GltfNode, Mesh as GltfMesh, Material as GltfMaterial, Texture as GltfTexture, Image as GltfImage, Sampler as GltfSampler, BufferView as GltfBufferView, Accessor as GltfAccessor, Primitive as GltfPrimitive
 import moderngl as gl
+from OpenGL import GL
 import numpy as np
 
 from core import Core
@@ -99,7 +100,7 @@ class GltfLoader:
     def __init__(self, environmentMapPath: Path | str):
         self.environment = Environment(EnvironmentMap(environmentMapPath))
 
-    def loadTexture(self, gltfTexture: GltfTexture, color: glm.vec3 | None = None, numComponents = 3, dataType = "f1"):
+    def loadTexture(self, gltfTexture: GltfTexture, color: glm.vec3 | None = None, numComponents = 3, dataType = "f1", internalFormat = None):
         gltfSampler: GltfSampler = self.gltf.samplers[gltfTexture.sampler] if gltfTexture else None
 
         if gltfTexture:
@@ -118,20 +119,20 @@ class GltfLoader:
             gltfImage: GltfImage = self.gltf.images[gltfTexture.source]
 
             image = Image.open(self.gltfDir / self.getPathFromUri(gltfImage.uri))
-            return Texture.fromImage(image, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, dataType = dataType)
+            return Texture.fromImage(image, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, dataType = dataType, generateMipMaps = True, internalFormat = internalFormat)
             
         else:
             print("Material loaded from color.")
-            return Texture.fromColor(color, numComponents, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, dataType = dataType)
+            return Texture.fromColor(color, numComponents, minificationFilter, magnificationFilter, True, True, dataType = dataType)
 
     def loadMaterial(self, gltfMaterial: GltfMaterial):
         pbr = gltfMaterial.pbrMetallicRoughness
 
-        baseColorTexture = self.loadTexture(self.gltf.textures[pbr.baseColorTexture.index] if pbr.baseColorTexture else None, pbr.baseColorFactor)
+        baseColorTexture = self.loadTexture(self.gltf.textures[pbr.baseColorTexture.index] if pbr.baseColorTexture else None, pbr.baseColorFactor, internalFormat = GL.GL_SRGB)
         normalTexture = self.loadTexture(self.gltf.textures[gltfMaterial.normalTexture.index] if gltfMaterial.normalTexture else None, glm.vec3(0.0, 0.0, 0.0))
         metallicRoughnessTexture = self.loadTexture(self.gltf.textures[pbr.metallicRoughnessTexture.index] if pbr.metallicRoughnessTexture else None, glm.vec3(0.0, pbr.roughnessFactor, pbr.metallicFactor), numComponents = 3)
         ambientOcclusionTexture = self.loadTexture(self.gltf.textures[gltfMaterial.occlusionTexture.index] if gltfMaterial.occlusionTexture else None, 1.0, numComponents = 1)
-        emissiveTexture = self.loadTexture(self.gltf.textures[gltfMaterial.emissiveTexture.index] if gltfMaterial.emissiveTexture else None, glm.vec3(0.0, 0.0, 0.0))
+        emissiveTexture = self.loadTexture(self.gltf.textures[gltfMaterial.emissiveTexture.index] if gltfMaterial.emissiveTexture else None, glm.vec3(0.0, 0.0, 0.0), internalFormat = GL.GL_SRGB)
 
         environmentMap = self.environment.environmentMap
         return PbrMaterial(self.mainShader, baseColorTexture, normalTexture, metallicRoughnessTexture, ambientOcclusionTexture, emissiveTexture, environmentMap.diffuseIrradienceCubemap, environmentMap.specularPrefilteredCubemap, environmentMap.brdfLookupTable)

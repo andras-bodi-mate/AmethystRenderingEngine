@@ -2,13 +2,17 @@ from pyglm import glm
 
 from core import Core
 from debug import Debug
+from window import Window
 
 class Camera:
-    def __init__(self, fov = 80, cameraPath = None, cameraPathScale = 1.0):
+    def __init__(self, window: Window, fov = 80, cameraPath = None, cameraPathScale = 1.0):
+        self.window = window
         self.fov = fov
-        self.position = glm.vec3(0.0, 1, 0)
+        self.position = glm.vec3(0.0, 1, 2)
         self.forward = glm.vec3(0, 0, -1)
         self.up = glm.vec3(0.0, 1.0, 0.0)
+        self.yaw = -90.0
+        self.pitch = 0.0
 
         self.projectionTransform: glm.mat4x4
 
@@ -22,7 +26,7 @@ class Camera:
         else:
             self.cameraPath = None
         
-        self.updateMatrices(1.0)
+        self.update()
 
     def getCameraPathNormalAtIndex(self, index):
         numSegments = len(self.cameraPath)
@@ -38,10 +42,9 @@ class Camera:
 
         return n
 
-    def updateMatrices(self, aspectRatio):
-        elapsedTime = Debug.getElapsedTime()
-
+    def update(self):
         if self.cameraPath:
+            elapsedTime = Debug.getElapsedTime()
             t = glm.fract(elapsedTime * 0.01)
             numSegments = len(self.cameraPath)
 
@@ -59,9 +62,6 @@ class Camera:
             self.position = glm.lerp(segmentStartPos, segmentEndPos, segmentT)
             self.forward = glm.slerp(segmentStartNormal, segmentEndNormal, segmentT)
 
-        #alpha = elapsedTime * 0.2
-        #self.forward = glm.vec3(glm.cos(alpha), 0, glm.sin(alpha))
-
-        self.projectionTransform = glm.perspective(glm.radians(self.fov), aspectRatio, 0.1, 1000.0)
+        self.projectionTransform = glm.perspective(glm.radians(self.fov), self.window.getAspectRation(), 0.1, 1000.0)
 
         self.viewTransform = glm.lookAt(self.position, self.position + self.forward, self.up)
