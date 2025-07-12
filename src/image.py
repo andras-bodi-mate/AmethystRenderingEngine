@@ -2,6 +2,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+from pyglm import glm
 
 from core import Core
 
@@ -23,7 +24,8 @@ class Image:
 
     @property
     def size(self):
-        return self.data.shape[:2]
+        size = self.data.shape[:2]
+        return glm.ivec2(size[0], size[1])
     
     @property
     def dataType(self):

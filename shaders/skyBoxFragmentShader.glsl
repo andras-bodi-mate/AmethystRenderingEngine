@@ -6,7 +6,7 @@ layout (binding = 0) uniform samplerCube u_environmentTexture;
 
 layout (location = 0) out vec4 fragColor;
 
-const float exposure = 0.8;
+const float exposure = 1.0;
 
 void main()
 {

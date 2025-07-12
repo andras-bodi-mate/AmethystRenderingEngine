@@ -19,18 +19,32 @@ class Texture:
     @staticmethod
     def fromColor(color: glm.vec3, numComponents = 3, minificationFilter = gl.LINEAR, magnificationFilter = gl.LINEAR, doRepeatX = False, doRepeatY = False, anisotropy = 16.0, dataType = "f1", internalFormat = None):
         if dataType == "f1":
-            print(type(color))
-            if isinstance(color, (glm.vec1, float, int)):
-                unclampedColor = glm.ivec1(color * 255)
+            if isinstance(color, (list, tuple)):
+                match len(color):
+                    case 1:
+                        unclampedColor = glm.ivec1(glm.vec1(color) * 255)
+                    
+                    case 2:
+                        unclampedColor = glm.ivec2(glm.vec2(color) * 255)
 
-            elif isinstance(color, glm.vec2):
-                unclampedColor = glm.ivec2(color * 255)
+                    case 3:
+                        unclampedColor = glm.ivec3(glm.vec3(color) * 255)
 
-            elif isinstance(color, glm.vec3):
-                unclampedColor = glm.ivec3(color * 255)
+                    case 4:
+                        unclampedColor = glm.ivec4(glm.vec4(color) * 255)
 
-            elif isinstance(color, glm.vec4):
-                unclampedColor = glm.ivec4(color * 255)
+            else:
+                if isinstance(color, (glm.vec1, float, int)):
+                    unclampedColor = glm.ivec1(color * 255)
+
+                elif isinstance(color, glm.vec2):
+                    unclampedColor = glm.ivec2(color * 255)
+
+                elif isinstance(color, glm.vec3):
+                    unclampedColor = glm.ivec3(color * 255)
+
+                elif isinstance(color, glm.vec4):
+                    unclampedColor = glm.ivec4(color * 255)
 
             pixel = glm.clamp(unclampedColor, 0, 255)
 

@@ -128,8 +128,8 @@ class GltfLoader:
     def loadMaterial(self, gltfMaterial: GltfMaterial):
         pbr = gltfMaterial.pbrMetallicRoughness
 
-        baseColorTexture = self.loadTexture(self.gltf.textures[pbr.baseColorTexture.index] if pbr.baseColorTexture else None, pbr.baseColorFactor, internalFormat = GL.GL_SRGB)
-        normalTexture = self.loadTexture(self.gltf.textures[gltfMaterial.normalTexture.index] if gltfMaterial.normalTexture else None, glm.vec3(0.0, 0.0, 0.0))
+        baseColorTexture = self.loadTexture(self.gltf.textures[pbr.baseColorTexture.index] if pbr.baseColorTexture else None, glm.vec4(pbr.baseColorFactor).xyz if pbr.baseColorFactor else None, internalFormat = GL.GL_SRGB)
+        normalTexture = self.loadTexture(self.gltf.textures[gltfMaterial.normalTexture.index] if gltfMaterial.normalTexture else None, glm.vec3(0.5, 0.5, 1.0))
         metallicRoughnessTexture = self.loadTexture(self.gltf.textures[pbr.metallicRoughnessTexture.index] if pbr.metallicRoughnessTexture else None, glm.vec3(0.0, pbr.roughnessFactor, pbr.metallicFactor), numComponents = 3)
         ambientOcclusionTexture = self.loadTexture(self.gltf.textures[gltfMaterial.occlusionTexture.index] if gltfMaterial.occlusionTexture else None, 1.0, numComponents = 1)
         emissiveTexture = self.loadTexture(self.gltf.textures[gltfMaterial.emissiveTexture.index] if gltfMaterial.emissiveTexture else None, glm.vec3(0.0, 0.0, 0.0), internalFormat = GL.GL_SRGB)

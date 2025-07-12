@@ -68,7 +68,7 @@ vec3[5] lightPositions = vec3[](
     vec3(6, -1.0, 0.0)
 );
 
-const float exposure = 0.8;
+const float exposure = 1.0;
 const vec3 lightColor = vec3(1.0, 1.0, 1.0);
 const float numPrefilterLods = 5.0;
 
@@ -80,12 +80,12 @@ void main() {
     vec3 V = normalize(u_cameraPosition - v_position);
     vec3 R = reflect(-V, N);
 
-    vec3 baseColor = texture(u_baseColorTexture, v_uv).xyz;
+    vec3 baseColor = pow(texture(u_baseColorTexture, v_uv).xyz, vec3(2.2));
     vec3 metallicRoughness = texture(u_metallicRoughnessTexture, v_uv).xyz;
     float roughness = metallicRoughness.y;
     float metallic = metallicRoughness.z;
     float ambientOcclusion = texture(u_ambientOcclusionTexture, v_uv).r;
-    vec3 emissiveColor = texture(u_emissiveTexture, v_uv).rgb;
+    vec3 emissiveColor = pow(texture(u_emissiveTexture, v_uv).rgb, vec3(2.2));
 
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, baseColor, clamp(metallic, 0.0, 1.0));
@@ -108,7 +108,7 @@ void main() {
     vec3 ambient = (kD * diffuse + specular) * ambientOcclusion;
     vec3 color = ambient;
 
-    float emissiveIntensity = 1.0;
+    float emissiveIntensity = 1.5;
     vec3 emissive = emissiveColor * emissiveIntensity;
 	
     color = color / (color + vec3(1.0));

@@ -13,7 +13,7 @@ class App:
     def __init__(self):
         self.window = Window()
         self.camera = Camera(self.window)
-        self.gltfLoader = GltfLoader("res/environments/restArea.hdr")
+        self.gltfLoader = GltfLoader("res/environments/nightCity.hdr")
         self.scene = self.gltfLoader.loadScene("res/scenes/Scifi Helmet/scifiHelmet.gltf")
         self.controller = Controller(self.window, self.camera)
 

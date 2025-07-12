@@ -40,8 +40,8 @@ class EnvironmentMap:
 
         image = Image.open(imagePath, np.float16, True)
         print(image.size)
-        newImageData = np.zeros((4096, 4096, 3), dtype = np.float16)
-        newImageData[:2048, :, :] = image.data
+        newImageData = np.zeros((image.size.y, image.size.y, 3), dtype = np.float16)
+        newImageData[:image.size.x, :, :] = image.data
         image.data = newImageData
         environmentTexture = Texture.fromImage(image, gl.LINEAR, gl.LINEAR, False, False, dataType = "f2")
 
