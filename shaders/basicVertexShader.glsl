@@ -15,7 +15,7 @@ out vec2 v_uv;
 out mat3 v_tangentBitangentNormal;
 
 void main() {
-    v_position = (mat3(u_objectTransform) * a_position).xyz; 
+    v_position = (u_objectTransform * vec4(a_position, 1.0)).xyz; 
     v_normal = a_normal;
     v_uv = a_uv;
 

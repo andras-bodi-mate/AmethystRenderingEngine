@@ -59,6 +59,8 @@ class GltfLoader:
         "MAT4": 16
     }
 
+    clearcoatExtension = "KHR_materials_clearcoat"
+
     @staticmethod
     def getPathFromUri(uri: str):
         return  Path(unquote(uri))
@@ -100,7 +102,7 @@ class GltfLoader:
     def __init__(self, environmentMapPath: Path | str):
         self.environment = Environment(EnvironmentMap(environmentMapPath))
 
-    def loadTexture(self, gltfTexture: GltfTexture, color: glm.vec3 | None = None, numComponents = 3, dataType = "f1", internalFormat = None):
+    def loadTexture(self, gltfTexture: GltfTexture, color: glm.vec3 | None = None, numComponents = 3, dataType = "f1", internalFormat = None, factors = None, isSrgb = False):
         gltfSampler: GltfSampler = self.gltf.samplers[gltfTexture.sampler] if gltfTexture else None
 
         if gltfTexture:
@@ -118,7 +120,14 @@ class GltfLoader:
         if gltfTexture:
             gltfImage: GltfImage = self.gltf.images[gltfTexture.source]
 
-            image = Image.open(self.gltfDir / self.getPathFromUri(gltfImage.uri))
+            image = Image.open(self.gltfDir / self.getPathFromUri(gltfImage.uri), isSrgb = isSrgb)
+            if factors:
+                if not isinstance(factors, tuple):
+                    factors = tuple([factors])
+
+                numpyDataType = np.uint8 if dataType == "f1" else np.float16
+                image.data = (image.data.astype(np.float32) * np.asarray(factors).reshape(1, 1, 3)).astype(numpyDataType)
+
             return Texture.fromImage(image, minificationFilter, magnificationFilter, doRepeatX, doRepeatY, dataType = dataType, generateMipMaps = True, internalFormat = internalFormat)
             
         else:
@@ -128,14 +137,26 @@ class GltfLoader:
     def loadMaterial(self, gltfMaterial: GltfMaterial):
         pbr = gltfMaterial.pbrMetallicRoughness
 
-        baseColorTexture = self.loadTexture(self.gltf.textures[pbr.baseColorTexture.index] if pbr.baseColorTexture else None, glm.vec4(pbr.baseColorFactor).xyz if pbr.baseColorFactor else None, internalFormat = GL.GL_SRGB)
+        baseColorTexture = self.loadTexture(self.gltf.textures[pbr.baseColorTexture.index] if pbr.baseColorTexture else None, glm.vec4(pbr.baseColorFactor).xyz if pbr.baseColorFactor else None, isSrgb = True)
         normalTexture = self.loadTexture(self.gltf.textures[gltfMaterial.normalTexture.index] if gltfMaterial.normalTexture else None, glm.vec3(0.5, 0.5, 1.0))
-        metallicRoughnessTexture = self.loadTexture(self.gltf.textures[pbr.metallicRoughnessTexture.index] if pbr.metallicRoughnessTexture else None, glm.vec3(0.0, pbr.roughnessFactor, pbr.metallicFactor), numComponents = 3)
+        metallicRoughnessTexture = self.loadTexture(self.gltf.textures[pbr.metallicRoughnessTexture.index] if pbr.metallicRoughnessTexture else None, glm.vec3(0.0, pbr.roughnessFactor, pbr.metallicFactor), numComponents = 3, factors = glm.vec3(1.0, pbr.roughnessFactor or 1.0, pbr.metallicFactor or 1.0) if pbr.roughnessFactor or pbr.metallicFactor else None)
         ambientOcclusionTexture = self.loadTexture(self.gltf.textures[gltfMaterial.occlusionTexture.index] if gltfMaterial.occlusionTexture else None, 1.0, numComponents = 1)
-        emissiveTexture = self.loadTexture(self.gltf.textures[gltfMaterial.emissiveTexture.index] if gltfMaterial.emissiveTexture else None, glm.vec3(0.0, 0.0, 0.0), internalFormat = GL.GL_SRGB)
+        emissiveTexture = self.loadTexture(self.gltf.textures[gltfMaterial.emissiveTexture.index] if gltfMaterial.emissiveTexture else None, glm.vec3(0.0, 0.0, 0.0), isSrgb = True)
+
+        if gltfMaterial.extensions and GltfLoader.clearcoatExtension in gltfMaterial.extensions:
+            clearcoatParameters = gltfMaterial.extensions[GltfLoader.clearcoatExtension]
+            clearcoatWeight = clearcoatParameters["clearcoatFactor"] if "clearcoatFactor" in clearcoatParameters else 0.0
+            clearcoatRoughness = clearcoatParameters["clearcoatRoughnessFactor"] if "clearcoatRoughnessFactor" in clearcoatParameters else 0.0
+            clearcoatTint = glm.vec3(1.0)
+        else:
+            clearcoatWeight = 0.0
+            clearcoatRoughness = 0.0
+            clearcoatTint = glm.vec3(1.0)
 
         environmentMap = self.environment.environmentMap
-        return PbrMaterial(self.mainShader, baseColorTexture, normalTexture, metallicRoughnessTexture, ambientOcclusionTexture, emissiveTexture, environmentMap.diffuseIrradienceCubemap, environmentMap.specularPrefilteredCubemap, environmentMap.brdfLookupTable)
+        return PbrMaterial(self.mainShader, baseColorTexture, normalTexture, metallicRoughnessTexture, ambientOcclusionTexture,
+                           emissiveTexture, clearcoatWeight, clearcoatRoughness, clearcoatTint,
+                           environmentMap.diffuseIrradienceCubemap, environmentMap.specularPrefilteredCubemap,environmentMap.brdfLookupTable)
 
     def loadMeshPart(self, gltfPrimitive: GltfPrimitive):
         positionAccessor: GltfAccessor = self.gltf.accessors[gltfPrimitive.attributes.POSITION]
@@ -161,7 +182,6 @@ class GltfLoader:
         uvData = np.asarray(GltfLoader.createArrayFromBytes(uvDataBytes, uvAccessor), dtype = np.float32).tobytes()
         tangentData = np.asarray(GltfLoader.createArrayFromBytes(tangentDataBytes, tangentAccessor), dtype = np.float32).tobytes()
         indexData = np.asarray(GltfLoader.createArrayFromBytes(indexDataBytes, indexAccessor), dtype = np.int32).tobytes()
-
 
         return MeshPart(vertexData, normalData, uvData, tangentData, indexData, self.materials[gltfPrimitive.material])
 

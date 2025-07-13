@@ -39,7 +39,6 @@ class EnvironmentMap:
         self.glContext = gl.get_context()
 
         image = Image.open(imagePath, np.float16, True)
-        print(image.size)
         newImageData = np.zeros((image.size.y, image.size.y, 3), dtype = np.float16)
         newImageData[:image.size.x, :, :] = image.data
         image.data = newImageData
@@ -142,10 +141,7 @@ class EnvironmentMap:
             roughness = mipLevel / (numMipLevels - 1)
             meshPart.material.shaderProgram.setUniform("u_roughness", roughness)
 
-            print(f"mip level: {mipLevel}, mip size: {mipSize}, roughness: {roughness}")
-            
             for faceIndex in range(6):
-                print("capturing face: ", faceIndex)
                 captureView = EnvironmentMap.captureViews[faceIndex]
                 captureSide = EnvironmentMap.captureSides[faceIndex]
 

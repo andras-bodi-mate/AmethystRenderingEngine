@@ -5,19 +5,25 @@ import numpy as np
 from pyglm import glm
 
 from core import Core
+from colorSpace import ColorSpace
 
 class Image:
     @staticmethod
-    def open(path: Path | str, dataType = np.uint8, flipVertical = False):
+    def open(path: Path | str, dataType = np.uint8, flipVertical = False, isSrgb = False):
         if Path(path).exists():
-            cvImage = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+            image = cv2.imread(path, cv2.IMREAD_UNCHANGED)
         else:
-            cvImage = cv2.imread(Core.getPath(Path(path)), cv2.IMREAD_UNCHANGED)
+            image = cv2.imread(Core.getPath(Path(path)), cv2.IMREAD_UNCHANGED)
 
         if flipVertical:
-            cvImage = cv2.flip(cvImage, 0)
+            image = cv2.flip(image, 0)
 
-        return Image(np.asarray(cv2.cvtColor(cvImage, cv2.COLOR_BGR2RGB), dtype = dataType))
+        image = np.asarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB), dtype = dataType)
+
+        if isSrgb:
+            ColorSpace.convertSrgbToLinear(image)
+
+        return Image(image)
 
     def __init__(self, data: np.ndarray):
         self.data = data

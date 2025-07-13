@@ -13,7 +13,7 @@ class App:
     def __init__(self):
         self.window = Window()
         self.camera = Camera(self.window)
-        self.gltfLoader = GltfLoader("res/environments/nightCity.hdr")
+        self.gltfLoader = GltfLoader("res/environments/mountain.hdr")
         self.scene = self.gltfLoader.loadScene("res/scenes/Scifi Helmet/scifiHelmet.gltf")
         self.controller = Controller(self.window, self.camera)
 
@@ -39,7 +39,7 @@ class App:
 
             self.camera.update()
 
-            self.window.glContext.clear(0.7, 0.7, 0.7)
+            self.window.glContext.clear(0.0, 0.0, 0.0)
             self.draw()
             self.window.swapBuffers()
 
